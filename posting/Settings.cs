@@ -23,7 +23,7 @@ namespace posting
             throw new NotImplementedException();
         }
 
-        public void ReadSettings(string pathSettings, out string settings)
+        public void ReadSettings(IZennoPosterProjectModel project, string pathSettings, out string settings)
         {
             if (File.Exists(pathSettings))
             {
@@ -35,6 +35,51 @@ namespace posting
                 File.WriteAllLines(pathSettings, list);
             }
             else throw new Exception("error read file settings");
+
+            project.SendInfoToLog("read settings", true);
+        }
+
+        public void disassembleSettings(IZennoPosterProjectModel project, string settings, out string user, out string proxy, out string groups)
+        {
+            var splitters = "|".ToCharArray();
+            string[] temp_arr = settings.Split(splitters);
+            if (temp_arr[0].Length != 0) user = temp_arr[0];
+            else throw new Exception("error user");
+            if (temp_arr[1].Length != 0) proxy = temp_arr[1];
+            else throw new Exception("error proxy");
+            if (temp_arr[2].Length != 0) groups = temp_arr[2];
+            else throw new Exception("error group list group");
+
+            project.SendInfoToLog("disassemble settings", true);
+        }
+
+        public void disassembleUser(IZennoPosterProjectModel project, string user, out string login, out string password, out string id)
+        {
+            var splitters = ":".ToCharArray();
+            string[] temp_arr = user.Split(splitters);
+
+            if (temp_arr[0].Length != 0) login = temp_arr[0];
+            else throw new Exception("error login");
+            if (temp_arr[1].Length != 0) password = temp_arr[1];
+            else throw new Exception("error password");
+            if (temp_arr[2].Length != 0) id = temp_arr[2];
+            else throw new Exception("error id");
+
+            project.SendInfoToLog("disassemble user", true);
+        }
+
+        public void disassembleGroup(IZennoPosterProjectModel project, string groups, out List<string> groupsList)
+        {
+            groupsList = new List<string>();
+            var splitters = ",".ToCharArray();
+            string[] temp_arr = groups.Split(splitters);
+            groupsList.Clear();
+            for (int i = 0; i < temp_arr.Length; i++)
+            {
+                groupsList.Add(temp_arr[i]);
+            }
+
+            project.SendInfoToLog("disassemble groups", true);
         }
 
         public void InstanceSettings(Instance instance, IZennoPosterProjectModel project, string nameInstance, string proxy)
@@ -79,35 +124,8 @@ namespace posting
             instance.AddToTitle(nameInstance);
 
             project.Profile.AcceptLanguage = "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3";
-        }
 
-        public void disassembledSSettings(string settings, out string user, out string proxy, out string groups)
-        {
-            var splitters = "|".ToCharArray();
-            string[] temp_arr = settings.Split(splitters);
-            if (temp_arr[0].Length != 0) user = temp_arr[0];
-            else throw new Exception("error user");
-            if (temp_arr[1].Length != 0) proxy = temp_arr[1];
-            else throw new Exception("error proxy");
-            if (temp_arr[2].Length != 0) groups = temp_arr[2];
-            else throw new Exception("error group list group");            
-        }
-
-        public void disassembledUser(string user, out string login, out string password, out string id)
-        {
-            var splitters = ":".ToCharArray();
-            string[] temp_arr = user.Split(splitters);
-
-            if (temp_arr[0].Length != 0) login = temp_arr[0];
-            else throw new Exception("error login");
-            if (temp_arr[1].Length != 0) password = temp_arr[1];
-            else throw new Exception("error password");
-            if (temp_arr[2].Length != 0) id = temp_arr[2];
-            else throw new Exception("error id");
-
-            
+            project.SendInfoToLog("set instance settings", true);
         }
     }
-
-   
 }

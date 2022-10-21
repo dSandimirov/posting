@@ -7,42 +7,44 @@ using ZennoLab.InterfacesLibrary.ProjectModel;
 
 namespace posting
 {
-    /// <summary>
-    /// Класс для запуска выполнения скрипта
-    /// </summary>
     public class Program : IZennoExternalCode
     {
-        public object SyncObject { get; private set; }
-
-        /// <summary>
-        /// Метод для запуска выполнения скрипта
-        /// </summary>
-        /// <param name="instance">Объект инстанса выделеный для данного скрипта</param>
-        /// <param name="project">Объект проекта выделеный для данного скрипта</param>
-        /// <returns>Код выполнения скрипта</returns>		
         public int Execute(Instance instance, IZennoPosterProjectModel project)
         {
-            string settings = string.Empty;
+            // Input
+            string settingsStr = string.Empty;
+            string user = string.Empty;
+            string proxy = string.Empty;
+            string groups = string.Empty;
+            // User
+            string login = string.Empty;
+            string password = string.Empty;
+            string id = string.Empty;
+            // Enable setting
+            string enProfile = project.Variables["enProfile"].Value;
+            // Path setting
+            string pathSettings = project.Variables["pathSettings"].Value;
+            string pathProfile = project.Directory + @"\profile\" + login + ".zpprofile";
+            // Lists
+            List<string> groupsList = new List<string>();
+            // Objects
+            Settings settings = new Settings(instance, project);
+            Profile profile = new Profile(instance, project);
+            // Read and disassemble settings
+            settings.ReadSettings(project, pathSettings, out settingsStr);
+            settings.disassembleSettings(project, settingsStr, out user, out proxy, out groups);
+            settings.disassembleUser(project, user, out login, out password, out id);
+            settings.disassembleGroup(project, groups, out groupsList);
+            // Instanse settings
+            settings.InstanceSettings(instance,project, login, proxy);
+            // Profile
+            profile.LoadProfile(project, enProfile, login);
 
-            Settings set = new Settings(instance, project);
-            set.ReadSettings(project.Variables["pathSettings"].Value, out settings);
-
-            //ReadSettings(project.Variables["pathSettings"].Value, out settings);
-            project.SendInfoToLog("read settings", true);
-
-            //InstanceSettings(instance, project);
             //GoUrl(instance, "Http://ok.ru");
-
-            project.SendInfoToLog("disassembyly settings", true);
-            project.SendInfoToLog("disassembyly user", true);
-
 
 
             return 0;
         }
-
-
-
 
         public void GoUrl(Instance instance, string url)
         {
