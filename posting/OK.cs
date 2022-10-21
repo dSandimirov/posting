@@ -198,7 +198,97 @@ namespace posting
             }
         }
 
-        public 
+        public static void Messages(Instance instance, IZennoPosterProjectModel project, string login)
+        {
+            HtmlElement he;
+
+            he = instance.ActiveTab.FindElementByAttribute("li", "data-l", "t,messages", "regexp", 0);
+            CommonCode.ClickCoordinate(instance, 2, -1, he);
+
+            int kol = instance.ActiveTab.FindElementsByAttribute("msg-chat-notification-bubble", "chat", @"{}", "regexp").Count;
+            int randomSelect = CommonCode.RandomInt(0, kol);
+
+            he = instance.ActiveTab.FindElementByAttribute("msg-chat-notification-bubble", "chat", @"{}", "regexp", randomSelect);
+            CommonCode.ClickCoordinate(instance, 2, -1, he);
+
+            project.SendInfoToLog(login + " -> message");
+        }
+
+        public static void Friends (Instance instance, IZennoPosterProjectModel project, string login)
+        {
+            HtmlElement he;
+
+            he = instance.ActiveTab.FindElementByAttribute("li", "data-l", "t,guests", "regexp", 0);
+            CommonCode.ClickCoordinate(instance, 2, -1, he);
+
+            he = instance.ActiveTab.FindElementByAttribute("a", "href", @"friendRequests", "regexp", 0);
+            CommonCode.ClickCoordinate(instance, 2, -1, he);
+
+            int kol = instance.ActiveTab.FindElementsByAttribute("span", "innertext", "Принять", "regexp").Count;
+            int randomSelect = CommonCode.RandomInt(0, kol);
+            he = instance.ActiveTab.FindElementByAttribute("span", "innertext", "Принять", "regexp", randomSelect);
+            CommonCode.ClickCoordinate(instance, 2, -1, he);
+
+            project.SendInfoToLog(login + " -> frend");
+        }
+
+        public static void Developments(Instance instance, IZennoPosterProjectModel project, string login)
+        {
+            HtmlElement he;
+
+            he = instance.ActiveTab.FindElementByAttribute("li", "data-l", "t,marks", "regexp", 0);
+            CommonCode.ClickCoordinate(instance, 2, -1, he);
+
+            project.SendInfoToLog(login + " -> developments");
+        }
+
+        public static void Discussions(Instance instance, IZennoPosterProjectModel project, string login)
+        {
+            HtmlElement he;
+
+            he = instance.ActiveTab.FindElementByAttribute("li", "data-l", "t,discussions", "regexp", 0);
+            CommonCode.ClickCoordinate(instance, 2, -1, he);
+
+            int kol = instance.ActiveTab.FindElementsByAttribute("div", "class", @"counterText", "regexp").Count;
+            int random_select = CommonCode.RandomInt(0, kol);
+
+            he = instance.ActiveTab.FindElementByAttribute("div", "class", @"counterText", "regexp", random_select);
+            CommonCode.ClickCoordinate(instance, 2, -1, he);
+
+            project.SendInfoToLog(login + " -> discussions");
+        }
+
+        public static void Klasser(Instance instance, IZennoPosterProjectModel project, string login)
+        {
+            List<string> examinations = new List<string>();
+            examinations.Clear(); examinations.Add(@"Напишите заметку");
+            CommonCode.GoUrl(instance, project, "Http://ok.ru", 2, examinations);
+
+            int randomSelect = CommonCode.RandomInt(1, 5);
+
+            HtmlElement he;
+
+            for (int i = 0; i < randomSelect; i++)
+            {
+                int kolKlass = instance.ActiveTab.FindElementsByAttribute("span", "data-unlike-tx", "Класс", "regexp").Count;
+
+                int currentSelect = CommonCode.RandomInt(1, kolKlass);
+                he = instance.ActiveTab.FindElementByAttribute("span", "data-unlike-tx", "Класс", "regexp", currentSelect);
+
+                if (!he.IsVoid)
+                {
+                    instance.WaitFieldEmulationDelay();
+
+                    he.RiseEvent("click", instance.EmulationLevel);
+
+                    project.SendInfoToLog(login + " -> class", true);
+                }
+                else
+                {
+                    project.SendWarningToLog(login + " -> class", true);
+                }
+            }
+        }
         int IZennoExternalCode.Execute(Instance instance, IZennoPosterProjectModel project)
         {
             throw new NotImplementedException();

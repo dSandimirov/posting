@@ -51,6 +51,7 @@ namespace posting
                 if (!pageLoad)
                 {
                     project.SendWarningToLog(url + " no load");
+
                     Thread.Sleep(delay * 1000);
                 }
             } while (!pageLoad);            

@@ -35,6 +35,9 @@ namespace posting
             bool profileStatus = false;
             // delays
             short commonDelay = 2;
+            // randoms
+            int randomSelect = 0;
+
             // Read and disassemble settings
             Settings.ReadSettings(project, pathSettings, out settingsStr);
             Settings.disassembleSettings(project, settingsStr, out user, out proxy, out groups);
@@ -50,14 +53,14 @@ namespace posting
                 // Profile
                 Profile.LoadProfile(project, enProfile, pathProfile, login, out profileStatus);
                 examinations.Clear(); examinations.Add(@"Зарегистрироваться"); examinations.Add(@"Напишите заметку");
-                CommonCode.GoUrl(instance, project, "Http://ok.ru", commonDelay, examinations);
+                CommonCode.GoUrl(instance, project, "https://ok.ru", commonDelay, examinations);
                 OK.CheckLogining(instance, project, login, out logining);
                 if (!logining) {
                     // logining
                     do
                     {
                         examinations.Clear(); examinations.Add(@"Зарегистрироваться");
-                        CommonCode.GoUrl(instance, project, "Http://ok.ru", commonDelay, examinations);
+                        CommonCode.GoUrl(instance, project, "https://ok.ru", commonDelay, examinations);
                         OK.Logininng(instance, project, login, password, commonDelay);
                         OK.CheckLogining(instance, project, login, out logining);
                         OK.CheckBadUser(instance, project, settingsStr, pathSettings, user, login, tematika, proxy);
@@ -68,7 +71,70 @@ namespace posting
                 profileStatus = true;
             } while (!profileStatus) ;
 
+            // walking
+            randomSelect = CommonCode.RandomInt(0, 5);
+            Walking(instance, project, randomSelect, login);
+
+
+
             return 0;
         }
+
+        public void Walking(Instance instance, IZennoPosterProjectModel project, int mode, string login)
+        {
+            switch (mode)
+            {
+                case 0:
+                    OK.Messages(instance, project, login);
+                    OK.Friends(instance, project, login);
+                    OK.Developments(instance, project, login);
+                    OK.Discussions(instance, project, login);
+                    OK.Klasser(instance, project, login);
+                    break;
+                case 1:                    
+                    OK.Friends(instance, project, login);                    
+                    OK.Messages(instance, project, login);
+                    OK.Discussions(instance, project, login);
+                    OK.Developments(instance, project, login);
+                    OK.Klasser(instance, project, login);
+                    break;
+                case 2:
+                    OK.Messages(instance, project, login);
+                    OK.Klasser(instance, project, login);
+                    OK.Friends(instance, project, login);                    
+                    OK.Discussions(instance, project, login);
+                    OK.Developments(instance, project, login);
+                    break;
+                case 3:                    
+                    OK.Friends(instance, project, login);
+                    OK.Developments(instance, project, login);
+                    OK.Discussions(instance, project, login);
+                    OK.Klasser(instance, project, login);
+                    OK.Messages(instance, project, login);
+                    break;
+                case 4:
+                    OK.Developments(instance, project, login);
+                    OK.Discussions(instance, project, login);
+                    OK.Messages(instance, project, login);
+                    OK.Friends(instance, project, login);                   
+                    OK.Klasser(instance, project, login);
+                    break;
+                case 5:
+                    OK.Messages(instance, project, login);
+                    OK.Friends(instance, project, login);                    
+                    OK.Klasser(instance, project, login);
+                    OK.Developments(instance, project, login);
+                    OK.Discussions(instance, project, login);
+                    break;
+                default:
+                    OK.Discussions(instance, project, login);
+                    OK.Developments(instance, project, login);
+                    OK.Klasser(instance, project, login);
+                    OK.Friends(instance, project, login);
+                    OK.Messages(instance, project, login);
+                    break;
+            }            
+        }
+
     }
 }
