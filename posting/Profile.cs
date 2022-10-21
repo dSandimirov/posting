@@ -11,44 +11,33 @@ namespace posting
 {
     internal class Profile : IZennoExternalCode
     {
-        public Profile(Instance instance, IZennoPosterProjectModel project)
+        public static void LoadProfile(IZennoPosterProjectModel project, string enProfile, string pathProfile, string login, out bool profileStatus)
         {
-        }
-
-        public int Execute(Instance instance, IZennoPosterProjectModel project)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void LoadProfile(IZennoPosterProjectModel project, string enProfile, string login)
-        {
-            string path = project.Directory + @"\profile" + login + ".zpprofile";
+            profileStatus = false;
             if (enProfile == "True")
             {
-                if (File.Exists(path))
+                if (File.Exists(pathProfile))
                 {
-                    project.Profile.Load(path);
+                    project.Profile.Load(pathProfile);
                     project.SendInfoToLog(login + " -> load profile", true);
+                    profileStatus = true;
                 }
                 else
                 {
-                    CreateProfile(project, enProfile, login);
+                    project.SendWarningToLog(login + " -> unload profile", true);
                 }
             }            
         }
 
-        public void SafeProfile(IZennoPosterProjectModel project, string enProfile, string login)
+        public static void SafeProfile(IZennoPosterProjectModel project, string enProfile, string pathProfile, string login)
         {
-            string path = project.Directory + @"\profile\" + login + ".zpprofile";
-            project.Profile.Save(path, false, false, true, true, true, true, true, true, true);
+            project.Profile.Save(pathProfile, false, false, true, true, true, true, true, true, true);
             project.SendInfoToLog(login + " -> safe profile", true);
         }
-
-        public void CreateProfile(IZennoPosterProjectModel project, string enProfile, string login)
+ 
+        int IZennoExternalCode.Execute(Instance instance, IZennoPosterProjectModel project)
         {
-            string path = project.Directory + @"\profile\" + login + ".zpprofile";
-            project.Profile.Save(path, false, false, true, true, true, true, true, true, true);
-            project.SendInfoToLog(login + " -> create profile", true);
+            throw new NotImplementedException();
         }
     }
 }

@@ -1,29 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Threading.Tasks;
-using ZennoLab.CommandCenter;
-using ZennoLab.InterfacesLibrary.ProjectModel;
+using System.Threading;
 using System.IO;
-using System.Diagnostics.Eventing.Reader;
+using System.Text.RegularExpressions;
+using ZennoLab.CommandCenter;
+using ZennoLab.InterfacesLibrary;
+using ZennoLab.InterfacesLibrary.ProjectModel;
+using ZennoLab.InterfacesLibrary.ProjectModel.Collections;
+using ZennoLab.InterfacesLibrary.ProjectModel.Enums;
+using ZennoLab.InterfacesLibrary.Enums;
+using ZennoLab.InterfacesLibrary.Instance;
+using ZennoLab.Macros;
+using Global.ZennoExtensions;
+using ZennoLab.Emulation;
 
 namespace posting
 {
     internal class Settings : IZennoExternalCode
     {
-        public Settings(Instance instance, IZennoPosterProjectModel project)
-        { 
-
-        }
-
-        public int Execute(Instance instance, IZennoPosterProjectModel project)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void ReadSettings(IZennoPosterProjectModel project, string pathSettings, out string settings)
+        public static void ReadSettings(IZennoPosterProjectModel project, string pathSettings, out string settings)
         {
             if (File.Exists(pathSettings))
             {
@@ -39,7 +39,7 @@ namespace posting
             project.SendInfoToLog("read settings", true);
         }
 
-        public void disassembleSettings(IZennoPosterProjectModel project, string settings, out string user, out string proxy, out string groups)
+        public static void disassembleSettings(IZennoPosterProjectModel project, string settings, out string user, out string proxy, out string groups)
         {
             var splitters = "|".ToCharArray();
             string[] temp_arr = settings.Split(splitters);
@@ -53,7 +53,7 @@ namespace posting
             project.SendInfoToLog("disassemble settings", true);
         }
 
-        public void disassembleUser(IZennoPosterProjectModel project, string user, out string login, out string password, out string id)
+        public static void disassembleUser(IZennoPosterProjectModel project, string user, out string login, out string password, out string id)
         {
             var splitters = ":".ToCharArray();
             string[] temp_arr = user.Split(splitters);
@@ -68,7 +68,7 @@ namespace posting
             project.SendInfoToLog("disassemble user", true);
         }
 
-        public void disassembleGroup(IZennoPosterProjectModel project, string groups, out List<string> groupsList)
+        public static void disassembleGroup(IZennoPosterProjectModel project, string groups, out List<string> groupsList)
         {
             groupsList = new List<string>();
             var splitters = ",".ToCharArray();
@@ -82,7 +82,7 @@ namespace posting
             project.SendInfoToLog("disassemble groups", true);
         }
 
-        public void InstanceSettings(Instance instance, IZennoPosterProjectModel project, string nameInstance, string proxy)
+        public static void InstanceSettings(Instance instance, IZennoPosterProjectModel project, string nameInstance, string proxy)
         {
             instance.ClearCookie();
             instance.ClearCache();
@@ -126,6 +126,11 @@ namespace posting
             project.Profile.AcceptLanguage = "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3";
 
             project.SendInfoToLog("set instance settings", true);
+        }
+
+        int IZennoExternalCode.Execute(Instance instance, IZennoPosterProjectModel project)
+        {
+            throw new NotImplementedException();
         }
     }
 }

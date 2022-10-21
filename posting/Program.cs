@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
 using ZennoLab.CommandCenter;
 using ZennoLab.InterfacesLibrary.ProjectModel;
 
@@ -16,6 +17,7 @@ namespace posting
             string user = string.Empty;
             string proxy = string.Empty;
             string groups = string.Empty;
+            string tematika = project.Variables["tematika"].Value;
             // User
             string login = string.Empty;
             string password = string.Empty;
@@ -27,33 +29,46 @@ namespace posting
             string pathProfile = project.Directory + @"\profile\" + login + ".zpprofile";
             // Lists
             List<string> groupsList = new List<string>();
-            // Objects
-            Settings settings = new Settings(instance, project);
-            Profile profile = new Profile(instance, project);
+            List<string> examinations = new List<string>();    
+            // flags
+            bool logining = false;
+            bool profileStatus = false;
+            // delays
+            short commonDelay = 2;
             // Read and disassemble settings
-            settings.ReadSettings(project, pathSettings, out settingsStr);
-            settings.disassembleSettings(project, settingsStr, out user, out proxy, out groups);
-            settings.disassembleUser(project, user, out login, out password, out id);
-            settings.disassembleGroup(project, groups, out groupsList);
+            Settings.ReadSettings(project, pathSettings, out settingsStr);
+            Settings.disassembleSettings(project, settingsStr, out user, out proxy, out groups);
+            Settings.disassembleUser(project, user, out login, out password, out id);
+            Settings.disassembleGroup(project, groups, out groupsList);
+
             // Instanse settings
-            settings.InstanceSettings(instance,project, login, proxy);
-            // Profile
-            profile.LoadProfile(project, enProfile, login);
+            Settings.InstanceSettings(instance, project, login, proxy);
 
-            //GoUrl(instance, "Http://ok.ru");
+            // load profile and logining
+            do
+            {
+                // Profile
+                Profile.LoadProfile(project, enProfile, pathProfile, login, out profileStatus);
+                examinations.Clear(); examinations.Add(@"Зарегистрироваться"); examinations.Add(@"Напишите заметку");
+                CommonCode.GoUrl(instance, project, "Http://ok.ru", commonDelay, examinations);
+                OK.CheckLogining(instance, project, login, out logining);
+                if (!logining) {
+                    // logining
+                    do
+                    {
+                        examinations.Clear(); examinations.Add(@"Зарегистрироваться");
+                        CommonCode.GoUrl(instance, project, "Http://ok.ru", commonDelay, examinations);
+                        OK.Logininng(instance, project, login, password, commonDelay);
+                        OK.CheckLogining(instance, project, login, out logining);
+                        OK.CheckBadUser(instance, project, settingsStr, pathSettings, user, login, tematika, proxy);
 
+                    } while (!logining);
+                }
+                Profile.SafeProfile(project, enProfile, pathProfile, login);
+                profileStatus = true;
+            } while (!profileStatus) ;
 
             return 0;
         }
-
-        public void GoUrl(Instance instance, string url)
-        {
-            Tab tab = instance.ActiveTab;
-            if ((tab.IsVoid) || (tab.IsNull)) throw new Exception("error open page " + url);
-            if (tab.IsBusy) tab.WaitDownloading();
-            tab.Navigate(url, "");
-            if (tab.IsBusy) tab.WaitDownloading();
-        }
-
     }
 }
