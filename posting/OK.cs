@@ -14,50 +14,23 @@ namespace posting
 {
     internal class OK : IZennoExternalCode
     { 
+        // common
         public static void Logininng(Instance instance, IZennoPosterProjectModel project, string login, string password, int delay)
         {
             HtmlElement he;
 
             // login
             he = instance.ActiveTab.FindElementByAttribute("input:text", "id", "field_email", "regexp", 0);
-            CommonCode.SetParameter(instance, he, login);
+            CommonCode.SetStringParameterOnPage(instance, he, login);
             // password
             he = instance.ActiveTab.FindElementByAttribute("input:password", "id", "field_password", "regexp", 0);
-            CommonCode.SetParameter(instance, he, password);
+            CommonCode.SetStringParameterOnPage(instance, he, password);
             // click
             he = instance.ActiveTab.FindElementByAttribute("input:submit", "value", "Войти в Одноклассники", "regexp", 0);
             CommonCode.ClickCoordinate(instance, 2, -1, he);
 
             Thread.Sleep(delay*1000);
         }
-
-        public static void CheckBadUser(Instance instance, IZennoPosterProjectModel project, string settings, string pathSettings, string user, string login, string tematika, string proxy)
-        {
-            Tab tab = instance.ActiveTab;
-            if (tab.IsBusy) tab.WaitDownloading();
-            string pageText = tab.PageText;
-
-            string[] searchText =
-            {
-                @"Неправильно указан",
-                @"профиль заблокирован",
-                @"Доступ к профилю ограничен",
-                @"Профиль удалён по просьбе",
-            };
-
-            for (int i = 0; i < searchText.Length; i++)
-            {
-                var pattern = new Regex(searchText[i]);
-                var match = pattern.Match(pageText);
-                if ((match.Value) == searchText[i])
-                {
-                    WriteBadUser(project, settings, pathSettings, user, login, tematika, proxy);
-                }
-            }
-
-            project.SendInfoToLog(login + " -> check user");
-        }
-
         public static void CheckLogining(Instance instance, IZennoPosterProjectModel project, string login, out bool logining)
         {
             logining = false;
@@ -100,7 +73,6 @@ namespace posting
             if (logining) project.SendInfoToLog(login + " -> logining", true);
             else project.SendWarningToLog(login + " -> unlogining", true);
         }
-
         public static void Capcha(Instance instance, IZennoPosterProjectModel project, string login, string password, int delay)
         {
 
@@ -162,7 +134,31 @@ namespace posting
             }
 
         }
+        
+        // user
+        public static bool CheckBadUser(Instance instance, IZennoPosterProjectModel project, string login)
+        {
+            bool result = false;
+            Tab tab = instance.ActiveTab;
+            if (tab.IsBusy) tab.WaitDownloading();
+            string pageText = tab.PageText;
 
+            string[] searchText = { @"Неправильно указан", @"профиль заблокирован", @"Доступ к профилю ограничен", @"Профиль удалён по просьбе" };
+
+            for (int i = 0; i < searchText.Length; i++)
+            {
+                var pattern = new Regex(searchText[i]);
+                var match = pattern.Match(pageText);
+                if ((match.Value) == searchText[i])
+                {
+                    result = true;
+                    break;
+                }
+            }
+
+            project.SendInfoToLog(login + " -> check user");
+            return result;
+        }
         public static void WriteBadUser(IZennoPosterProjectModel project, string settings, string pathSettings, string user, string login, string tematika, string proxy)
         {
             if (settings[0] != '#')
@@ -185,11 +181,11 @@ namespace posting
                 File.AppendAllText(project.Directory + @"\bad_user.txt", dateTime + " -> " + tematika + " -> " + user + " -> " + proxy + Environment.NewLine);
             }
 
+            project.SendErrorToLog(login + " -> new bad user", true);
+
             // max thread - 1
             var id = Guid.Parse(project.TaskId);
             ZennoPoster.SetMaxThreads(id, ZennoPoster.GetThreadsCount(id) - 1);
-
-            project.SendErrorToLog(login + " -> bad user", true);
 
             // stop
             if (ZennoPoster.GetThreadsCount(id) == 1)
@@ -197,7 +193,75 @@ namespace posting
                 ZennoPoster.StopTask(id);
             }
         }
+        
+        // group
+        public static string GetGroup(IZennoPosterProjectModel project, List<string> list, string login)
+        {
+            string element = string.Empty;
+            for (int i = 0; i < list.Count; i++)
+            {
+                element = list.ElementAt(0);
+                if (element[0] == '#')
+                {
+                    project.SendErrorToLog(login + " -> " + element + " -> bad group", true);
+                    list.RemoveAt(0);
+                }
+                else
+                {
+                    list.Add(list.ElementAt(0));
+                    list.Remove(list.ElementAt(0));
+                    project.SendInfoToLog(login + " -> " + element + " -> get group");
+                    break;
+                }
+            }
 
+            if (list.Count == 0)
+            {
+                throw new Exception(login + " -> all group blocked");
+            }
+
+            return element;
+        }
+        public static bool CheckGroup(Instance instance, IZennoPosterProjectModel project, string url, string group)
+        {
+            bool result = false;
+            List<string> list = new List<string>();
+
+            list.Clear(); list.Add(@"О группе");
+            CommonCode.GoUrl(instance, project, url, 5, list);
+
+            list.Clear(); list.Add(@"Группа заблокирована"); list.Add(@"Этой страницы нет");
+            result = CommonCode.SearchTextOnPage(instance, list);
+
+            return result;
+        }
+        public static void WriteBadGroup(IZennoPosterProjectModel project, string settings, string pathSettings, string user, string login, string tematika, string proxy, string group, List<string> list)
+        {
+            if (settings[0] != '#')
+            {
+                StreamReader reader = new StreamReader(pathSettings);
+                string content = reader.ReadToEnd();
+                reader.Close();
+
+                int index = content.IndexOf(group);
+                content = content.Remove(index, group.Length);
+                content = content.Insert(index, "#" + group);
+
+                StreamWriter writer = new StreamWriter(pathSettings);
+                writer.Write(content);
+                writer.Close();
+
+                list.Remove(group);
+
+                // write bad_user.txt
+                string dateTime = DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss");
+                File.AppendAllText(project.Directory + @"\bad_groups.txt", dateTime + " -> " + tematika + " -> " + user + " -> " + proxy + group + Environment.NewLine);
+
+                project.SendErrorToLog(login + " -> " + group + " -> new bad group", true);
+            }
+        }
+        
+        // walking
         public static void Messages(Instance instance, IZennoPosterProjectModel project, string login)
         {
             HtmlElement he;
@@ -213,7 +277,6 @@ namespace posting
 
             project.SendInfoToLog(login + " -> message");
         }
-
         public static void Friends (Instance instance, IZennoPosterProjectModel project, string login)
         {
             HtmlElement he;
@@ -231,7 +294,6 @@ namespace posting
 
             project.SendInfoToLog(login + " -> frend");
         }
-
         public static void Developments(Instance instance, IZennoPosterProjectModel project, string login)
         {
             HtmlElement he;
@@ -241,7 +303,6 @@ namespace posting
 
             project.SendInfoToLog(login + " -> developments");
         }
-
         public static void Discussions(Instance instance, IZennoPosterProjectModel project, string login)
         {
             HtmlElement he;
@@ -257,7 +318,6 @@ namespace posting
 
             project.SendInfoToLog(login + " -> discussions");
         }
-
         public static void Klasser(Instance instance, IZennoPosterProjectModel project, string login)
         {
             List<string> examinations = new List<string>();
@@ -288,7 +348,9 @@ namespace posting
                     project.SendWarningToLog(login + " -> class", true);
                 }
             }
-        }
+        }       
+
+        
         int IZennoExternalCode.Execute(Instance instance, IZennoPosterProjectModel project)
         {
             throw new NotImplementedException();

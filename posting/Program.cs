@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.NetworkInformation;
+using System.Runtime;
 using ZennoLab.CommandCenter;
 using ZennoLab.InterfacesLibrary.ProjectModel;
 
@@ -37,45 +38,78 @@ namespace posting
             short commonDelay = 2;
             // randoms
             int randomSelect = 0;
+            // counters
+            int amountGroup = 0;
+            int groupCount = 0;
+            // status
+            bool userStatus = false;
+            bool groupStatus = false;
 
-            // Read and disassemble settings
-            Settings.ReadSettings(project, pathSettings, out settingsStr);
-            Settings.disassembleSettings(project, settingsStr, out user, out proxy, out groups);
-            Settings.disassembleUser(project, user, out login, out password, out id);
-            Settings.disassembleGroup(project, groups, out groupsList);
-
-            // Instanse settings
-            Settings.InstanceSettings(instance, project, login, proxy);
-
-            // load profile and logining
-            do
+            try
             {
-                // Profile
-                Profile.LoadProfile(project, enProfile, pathProfile, login, out profileStatus);
-                examinations.Clear(); examinations.Add(@"Зарегистрироваться"); examinations.Add(@"Напишите заметку");
-                CommonCode.GoUrl(instance, project, "https://ok.ru", commonDelay, examinations);
-                OK.CheckLogining(instance, project, login, out logining);
-                if (!logining) {
-                    // logining
+                // Read and disassemble settings
+                Settings.ReadSettings(project, pathSettings, out settingsStr);
+                Settings.DisassembleSettings(project, settingsStr, out user, out proxy, out groups);
+                Settings.DisassembleUser(project, user, out login, out password, out id);
+                Settings.DisassembleGroup(project, groups, out groupsList);
+
+                // Instanse settings
+                Settings.InstanceSettings(instance, project, login, proxy);
+
+                // load profile, logining and check user
+                do
+                {
+                    // Profile
+                    Profile.LoadProfile(project, enProfile, pathProfile, login, out profileStatus);
+                    examinations.Clear(); examinations.Add(@"Зарегистрироваться"); examinations.Add(@"Напишите заметку");
+                    CommonCode.GoUrl(instance, project, "https://ok.ru", commonDelay, examinations);
+                    OK.CheckLogining(instance, project, login, out logining);
+                    if (!logining)
+                    {
+                        // logining
+                        do
+                        {
+                            examinations.Clear(); examinations.Add(@"Зарегистрироваться");
+                            CommonCode.GoUrl(instance, project, "https://ok.ru", commonDelay, examinations);
+                            OK.Logininng(instance, project, login, password, commonDelay);
+                            OK.CheckLogining(instance, project, login, out logining);
+                            userStatus = OK.CheckBadUser(instance, project, login);
+                            if (userStatus) OK.WriteBadUser(project, settingsStr, pathSettings, user, login, tematika, proxy);
+                        } while (!logining);
+                    }
+                    Profile.SafeProfile(project, enProfile, pathProfile, login);
+                    profileStatus = true;
+                } while (!profileStatus);
+
+                // walking
+                randomSelect = CommonCode.RandomInt(0, 5);
+                Walking(instance, project, randomSelect, login);
+
+                // posting
+                amountGroup = groupsList.Count;
+                if (amountGroup == 0)
+                {
+                    throw new Exception(login + " -> no group");
+                }
+                else
+                {
+                    string currentGroup = string.Empty;
+                    // get group and check
                     do
                     {
-                        examinations.Clear(); examinations.Add(@"Зарегистрироваться");
-                        CommonCode.GoUrl(instance, project, "https://ok.ru", commonDelay, examinations);
-                        OK.Logininng(instance, project, login, password, commonDelay);
-                        OK.CheckLogining(instance, project, login, out logining);
-                        OK.CheckBadUser(instance, project, settingsStr, pathSettings, user, login, tematika, proxy);
+                        currentGroup = OK.GetGroup(project, groupsList, login);
+                        groupStatus = OK.CheckGroup(instance, project, currentGroup, login);
+                        if (groupStatus) OK.WriteBadGroup(project, settingsStr,pathSettings, user, login, tematika, proxy, currentGroup, groupsList);
+                    } while (groupStatus);
+                    
 
-                    } while (!logining);
+
                 }
-                Profile.SafeProfile(project, enProfile, pathProfile, login);
-                profileStatus = true;
-            } while (!profileStatus) ;
-
-            // walking
-            randomSelect = CommonCode.RandomInt(0, 5);
-            Walking(instance, project, randomSelect, login);
-
-
+            } 
+            catch (Exception e)
+            {
+                project.SendErrorToLog(e.ToString(), true);
+            }          
 
             return 0;
         }

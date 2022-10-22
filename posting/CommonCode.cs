@@ -36,22 +36,10 @@ namespace posting
             // examination
             do
             {
-                for (int i = 0; i < examination.Count; i++)
-                {
-                    string pageText = tab.PageText;
-                    var pattern = new Regex(examination.ElementAt(i));
-                    var match = pattern.Match(pageText);
-                    if ((match.Value) == examination.ElementAt(i))
-                    {
-                        pageLoad = true;
-                        break;
-                    }
-                    else continue;
-                }
+                pageLoad = SearchTextOnPage(instance, examination);
                 if (!pageLoad)
                 {
                     project.SendWarningToLog(url + " no load");
-
                     Thread.Sleep(delay * 1000);
                 }
             } while (!pageLoad);            
@@ -82,7 +70,7 @@ namespace posting
             Thread.Sleep(2000);
         }
         // set parametr
-        public static void SetParameter(Instance instance, HtmlElement he, string parametr)
+        public static void SetStringParameterOnPage(Instance instance, HtmlElement he, string parametr)
         {
             instance.WaitFieldEmulationDelay();
             if (he.IsVoid || he.IsNull) throw new Exception("error set parametr");
@@ -124,6 +112,26 @@ namespace posting
             Console.WriteLine(startDate.ToString("yyyy.dd.MM"));
             var newDate = startDate.AddDays(rnd.Next(366));
             return newDate.ToString("yyyy:dd:MM " + rnd.Next(10, 23) + ":" + rnd.Next(10, 59) + ":" + rnd.Next(10, 59));
+        }
+        // seqrch text on page
+        public static bool SearchTextOnPage(Instance instance, List<string> searchTextList)
+        {
+            bool status = false;
+            Tab tab = instance.ActiveTab; 
+
+            for (int i = 0; i < searchTextList.Count; i++)
+            {
+                string pageText = tab.PageText;
+                var pattern = new Regex(searchTextList.ElementAt(i));
+                var match = pattern.Match(pageText);
+                if ((match.Value) == searchTextList.ElementAt(i))
+                {
+                    status = true;
+                    break;
+                }
+                else continue;
+            }
+            return status;
         }
 
         int IZennoExternalCode.Execute(Instance instance, IZennoPosterProjectModel project)

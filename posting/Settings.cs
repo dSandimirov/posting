@@ -39,7 +39,7 @@ namespace posting
             project.SendInfoToLog("read settings", true);
         }
 
-        public static void disassembleSettings(IZennoPosterProjectModel project, string settings, out string user, out string proxy, out string groups)
+        public static void DisassembleSettings(IZennoPosterProjectModel project, string settings, out string user, out string proxy, out string groups)
         {
             var splitters = "|".ToCharArray();
             string[] temp_arr = settings.Split(splitters);
@@ -53,7 +53,7 @@ namespace posting
             project.SendInfoToLog("disassemble settings", true);
         }
 
-        public static void disassembleUser(IZennoPosterProjectModel project, string user, out string login, out string password, out string id)
+        public static void DisassembleUser(IZennoPosterProjectModel project, string user, out string login, out string password, out string id)
         {
             var splitters = ":".ToCharArray();
             string[] temp_arr = user.Split(splitters);
@@ -68,7 +68,7 @@ namespace posting
             project.SendInfoToLog("disassemble user", true);
         }
 
-        public static void disassembleGroup(IZennoPosterProjectModel project, string groups, out List<string> groupsList)
+        public static void DisassembleGroup(IZennoPosterProjectModel project, string groups, out List<string> groupsList)
         {
             groupsList = new List<string>();
             var splitters = ",".ToCharArray();
