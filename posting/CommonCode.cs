@@ -18,13 +18,14 @@ using ZennoLab.InterfacesLibrary.Instance;
 using ZennoLab.Macros;
 using Global.ZennoExtensions;
 using ZennoLab.Emulation;
+using System.Diagnostics.Eventing.Reader;
 
 namespace posting
 {
     public class CommonCode: IZennoExternalCode
     {
-        // go url
-        public static void GoUrl(Instance instance, IZennoPosterProjectModel project, string url, short delay, List<string> examination)
+        // go url + examination
+        public static void GoUrlExm(Instance instance, IZennoPosterProjectModel project, string url, short delay, List<string> examination)
         {
             bool pageLoad = false;
             Tab tab = instance.ActiveTab;
@@ -43,6 +44,17 @@ namespace posting
                     Thread.Sleep(delay * 1000);
                 }
             } while (!pageLoad);            
+        }
+        // go url
+        public static void GoUrl(Instance instance, IZennoPosterProjectModel project, string url, short delay, string login)
+        {
+            Tab tab = instance.ActiveTab;
+            if ((tab.IsVoid) || (tab.IsNull)) throw new Exception("error load page");
+            if (tab.IsBusy) tab.WaitDownloading();
+            tab.Navigate(url, "google.ru");
+            if (tab.IsBusy) tab.WaitDownloading();
+
+            project.SendInfoToLog(login + " -> " + url, true);
         }
         // click coordinate
         public static void ClickCoordinate(Instance instance, int indent, int sizeOfType, HtmlElement he)
